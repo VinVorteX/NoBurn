@@ -66,6 +66,7 @@ func New() http.Handler {
 		// Survey routes
 		r.Post("/surveys", survey.CreateSurvey)
 		r.Get("/surveys", survey.GetSurveys)
+		r.Get("/surveys/{surveyID}/responses", survey.GetSurveyResponses)
 		r.Post("/surveys/responses", survey.SubmitResponse)
 		
 		// Analytics routes

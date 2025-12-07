@@ -257,3 +257,46 @@ func parseUint(s string) uint64 {
 	val, _ := strconv.ParseUint(s, 10, 32)
 	return val
 }
+
+func GetSurveyResponses(w http.ResponseWriter, r *http.Request) {
+	surveyID := chi.URLParam(r, "surveyID")
+	if surveyID == "" {
+		utils.WriteError(w, http.StatusBadRequest, "Survey ID required")
+		return
+	}
+
+	surveyRepo := repository.NewSurveyRepository()
+	responses, err := surveyRepo.GetResponsesBySurveyID(uint(parseUint(surveyID)))
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to fetch responses")
+		return
+	}
+
+	// Enrich with user details
+	userRepo := repository.NewUserRepository()
+	type ResponseWithUser struct {
+		ID        uint     `json:"id"`
+		UserID    uint     `json:"user_id"`
+		UserName  string   `json:"user_name"`
+		UserEmail string   `json:"user_email"`
+		Responses []string `json:"responses"`
+		Sentiment float64  `json:"sentiment"`
+		CreatedAt string   `json:"created_at"`
+	}
+
+	result := []ResponseWithUser{}
+	for _, resp := range responses {
+		user, _ := userRepo.GetByID(resp.UserID)
+		result = append(result, ResponseWithUser{
+			ID:        resp.ID,
+			UserID:    resp.UserID,
+			UserName:  user.Name,
+			UserEmail: user.Email,
+			Responses: resp.Responses,
+			Sentiment: resp.Sentiment,
+			CreatedAt: resp.CreatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	utils.WriteSuccess(w, result)
+}

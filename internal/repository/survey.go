@@ -36,3 +36,9 @@ func (r *SurveyRepository) GetResponsesByUserID(userID uint) ([]models.SurveyRes
 	err := database.DB.Preload("Survey").Where("user_id = ?", userID).Find(&responses).Error
 	return responses, err
 }
+
+func (r *SurveyRepository) GetResponsesBySurveyID(surveyID uint) ([]models.SurveyResponse, error) {
+	var responses []models.SurveyResponse
+	err := database.DB.Where("survey_id = ?", surveyID).Order("created_at DESC").Find(&responses).Error
+	return responses, err
+}
