@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/hibiken/asynq"
 	"github.com/VinVorteX/NoBurn/internal/repository"
@@ -196,10 +197,10 @@ func (h *TaskHandler) HandleSurveyInvitation(ctx context.Context, t *asynq.Task)
 
 	if smtpUser == "" {
 		// Fallback to env variables
-		smtpHost = "smtp.gmail.com"
+		smtpHost = os.Getenv("SMTP_HOST")
 		smtpPort = 587
-		smtpUser = ""
-		smtpPassword = ""
+		smtpUser = os.Getenv("SMTP_USER")
+		smtpPassword = os.Getenv("SMTP_PASSWORD")
 	}
 
 	// Generate survey link with token
