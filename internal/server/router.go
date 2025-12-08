@@ -62,6 +62,7 @@ func New() http.Handler {
 		r.Post("/employees", employee.AddEmployee)
 		r.Post("/employees/bulk", employee.BulkUploadEmployees)
 		r.Get("/employees", employee.GetEmployees)
+		r.Delete("/employees/{employeeID}", employee.DeleteEmployee)
 		
 		// Survey routes
 		r.Post("/surveys", survey.CreateSurvey)

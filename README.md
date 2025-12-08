@@ -62,7 +62,7 @@ docker ps
 ```
 
 **Services:**
-- Frontend: http://localhost:3002
+- Frontend: http://localhost:3002 (Vite + React + TypeScript + Shadcn UI)
 - API: http://localhost:3000
 - PostgreSQL: localhost:5433
 - Redis: localhost:6379
@@ -88,7 +88,7 @@ make dev-api
 make dev-worker
 
 # Terminal 3: Frontend
-cd frontend && npm start
+cd frontend && npm run dev
 ```
 
 ## 📚 API Documentation

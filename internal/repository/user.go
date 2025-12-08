@@ -32,3 +32,7 @@ func (r *UserRepository) GetByCompanyID(companyID uint) ([]models.User, error) {
 	err := database.DB.Where("company_id = ?", companyID).Find(&users).Error
 	return users, err
 }
+
+func (r *UserRepository) Delete(id uint) error {
+	return database.DB.Delete(&models.User{}, id).Error
+}

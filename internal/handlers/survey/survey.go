@@ -266,6 +266,15 @@ func GetSurveyResponses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	surveyRepo := repository.NewSurveyRepository()
+	
+	// Get survey details
+	survey, err := surveyRepo.GetByID(uint(parseUint(surveyID)))
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, "Survey not found")
+		return
+	}
+	
+	// Get responses
 	responses, err := surveyRepo.GetResponsesBySurveyID(uint(parseUint(surveyID)))
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to fetch responses")
@@ -277,8 +286,10 @@ func GetSurveyResponses(w http.ResponseWriter, r *http.Request) {
 	type ResponseWithUser struct {
 		ID        uint     `json:"id"`
 		UserID    uint     `json:"user_id"`
-		UserName  string   `json:"user_name"`
-		UserEmail string   `json:"user_email"`
+		User      struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+		} `json:"user"`
 		Responses []string `json:"responses"`
 		Sentiment float64  `json:"sentiment"`
 		CreatedAt string   `json:"created_at"`
@@ -287,16 +298,20 @@ func GetSurveyResponses(w http.ResponseWriter, r *http.Request) {
 	result := []ResponseWithUser{}
 	for _, resp := range responses {
 		user, _ := userRepo.GetByID(resp.UserID)
-		result = append(result, ResponseWithUser{
+		responseData := ResponseWithUser{
 			ID:        resp.ID,
 			UserID:    resp.UserID,
-			UserName:  user.Name,
-			UserEmail: user.Email,
 			Responses: resp.Responses,
 			Sentiment: resp.Sentiment,
-			CreatedAt: resp.CreatedAt.Format("2006-01-02 15:04:05"),
-		})
+			CreatedAt: resp.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+		responseData.User.Name = user.Name
+		responseData.User.Email = user.Email
+		result = append(result, responseData)
 	}
 
-	utils.WriteSuccess(w, result)
+	utils.WriteSuccess(w, map[string]interface{}{
+		"survey":    survey,
+		"responses": result,
+	})
 }

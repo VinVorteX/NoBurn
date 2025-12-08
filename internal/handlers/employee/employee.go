@@ -4,8 +4,10 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/VinVorteX/NoBurn/internal/models"
 	"github.com/VinVorteX/NoBurn/internal/repository"
 	"github.com/VinVorteX/NoBurn/internal/utils"
@@ -149,4 +151,51 @@ func GetEmployees(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteSuccess(w, employees)
+}
+
+// DeleteEmployee - Delete an employee
+func DeleteEmployee(w http.ResponseWriter, r *http.Request) {
+	employeeID := chi.URLParam(r, "employeeID")
+	if employeeID == "" {
+		utils.WriteError(w, http.StatusBadRequest, "Employee ID required")
+		return
+	}
+
+	id, err := strconv.ParseUint(employeeID, 10, 32)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid employee ID")
+		return
+	}
+
+	userID := r.Context().Value("userID").(uint)
+	userRepo := repository.NewUserRepository()
+	admin, err := userRepo.GetByID(userID)
+	if err != nil || admin.Role != "hr_admin" {
+		utils.WriteError(w, http.StatusForbidden, "Only admins can delete employees")
+		return
+	}
+
+	// Get employee to verify they're in same company
+	employee, err := userRepo.GetByID(uint(id))
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, "Employee not found")
+		return
+	}
+
+	if employee.CompanyID != admin.CompanyID {
+		utils.WriteError(w, http.StatusForbidden, "Cannot delete employee from another company")
+		return
+	}
+
+	if employee.Role == "hr_admin" {
+		utils.WriteError(w, http.StatusForbidden, "Cannot delete admin users")
+		return
+	}
+
+	if err := userRepo.Delete(uint(id)); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to delete employee")
+		return
+	}
+
+	utils.WriteSuccess(w, map[string]string{"message": "Employee deleted successfully"})
 }

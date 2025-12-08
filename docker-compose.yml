@@ -78,10 +78,15 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=http://localhost:3000
     container_name: noburn-frontend
     ports:
       - "3002:80"
+    environment:
+      - VITE_API_URL=http://localhost:3000
     depends_on:
       - api
     restart: unless-stopped
