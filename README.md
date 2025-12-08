@@ -51,21 +51,29 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/NoBurn.git
+git clone https://github.com/VinVorteX/NoBurn.git
 cd NoBurn
+
+# Copy environment file
+cp .env.example .env
+# Edit .env with your credentials (SMTP, HuggingFace token, etc.)
 
 # Start all services
 docker compose up -d
 
 # Check status
-docker ps
+docker compose ps
+
+# View logs
+docker compose logs -f
 ```
 
 **Services:**
-- Frontend: http://localhost:3002 (Vite + React + TypeScript + Shadcn UI)
+- Frontend: http://localhost:3002 (React + TypeScript + Shadcn UI + Nginx)
 - API: http://localhost:3000
 - PostgreSQL: localhost:5433
 - Redis: localhost:6379
+- Worker: Background job processor
 
 ### 🛠️ Local Development
 
@@ -77,6 +85,9 @@ cd frontend && npm install && cd ..
 # Setup environment
 cp .env.example .env
 # Edit .env with your credentials
+
+# Start PostgreSQL and Redis (via Docker)
+docker compose up -d postgres redis
 
 # Run migrations
 make migrate-up
@@ -90,6 +101,11 @@ make dev-worker
 # Terminal 3: Frontend
 cd frontend && npm run dev
 ```
+
+**Access:**
+- Frontend: http://localhost:3002 (or 3003 if port is busy)
+- API: http://localhost:3000
+- Health Check: http://localhost:3000/health
 
 ## 📚 API Documentation
 
@@ -236,30 +252,37 @@ NoBurn/
 ```bash
 # Server
 PORT=3000
-ENV=production
+ENV=development
 
 # Database
 DB_URL=postgres://user:pass@localhost:5432/noburn_db?sslmode=disable
 
 # JWT
-JWT_SECRET=your-secret-key
+JWT_SECRET=your-super-secret-jwt-key-here-min-64-chars
 JWT_EXPIRES_IN=24h
 
 # Redis
 REDIS_URL=redis://localhost:6379
 
+# ML Service
+ML_API_URL=http://localhost:5000
+
 # Hugging Face (IndicBERT)
 HUGGING_FACE_TOKEN=hf_xxxxxxxxxxxxx
+# Get free token at: https://huggingface.co/settings/tokens
 
-# Email (Optional - can be configured per company in UI)
+# SMTP Email Configuration
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=default@gmail.com
-SMTP_PASSWORD=app_password
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+ALERT_EMAIL=hr@yourcompany.com
 
 # Slack (Optional)
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx
 ```
+
+**Note**: Copy `.env.example` to `.env` and update with your credentials.
 
 ## 🤖 ML & AI
 
@@ -289,19 +312,44 @@ Thresholds:
 
 ## 📦 Deployment
 
-### Docker Production
+### Docker Production (Recommended)
 
 ```bash
 # Build and deploy
 docker compose up -d
 
 # View logs
-docker logs -f noburn-api
-docker logs -f noburn-worker
+docker compose logs -f api
+docker compose logs -f worker
+docker compose logs -f frontend
 
 # Scale workers
 docker compose up -d --scale worker=3
+
+# Stop services
+docker compose down
 ```
+
+### Render Deployment (Free Tier)
+
+```bash
+# 1. Push to GitHub
+git push origin main
+
+# 2. Connect Render to your repo
+# Visit: https://dashboard.render.com
+# New Blueprint → Select your repo
+# Render auto-detects render.yaml
+
+# 3. Add environment secrets in Render dashboard:
+# - HUGGING_FACE_TOKEN
+# - SMTP_USER
+# - SMTP_PASSWORD  
+# - ALERT_EMAIL
+# - SLACK_WEBHOOK_URL (optional)
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
 ### Manual Deployment
 
@@ -321,8 +369,10 @@ DB_URL=<prod-url> make migrate-up
 
 1. **Database**: PostgreSQL 15+
 2. **Cache**: Redis 7+
-3. **SMTP**: Gmail App Password or SendGrid
+3. **SMTP**: Gmail App Password (not regular password)
 4. **ML**: Hugging Face API token (free tier available)
+
+**Pre-Deployment Checklist**: See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
 
 ## 🧪 Testing
 
