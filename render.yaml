@@ -1,10 +1,4 @@
 services:
-  # PostgreSQL Database
-  - type: pserv
-    name: noburn-postgres
-    env: docker
-    plan: free
-    
   # Redis
   - type: redis
     name: noburn-redis
@@ -108,4 +102,3 @@ databases:
   - name: noburn-postgres
     databaseName: noburn_db
     user: noburn_user
-    plan: free
